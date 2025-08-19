@@ -1,98 +1,69 @@
 <?php
- 
 namespace App\Http\Controllers;
- 
-use App\Models\User;
 
 use Illuminate\Http\Request;
- 
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
+
+
+
 class PublicVendorController extends Controller
-
 {
-
-    // 📌 READ: Get all vendors
-
     public function getVendors()
-
     {
-
-        $vendors = User::where('role', 'vendor')->get(); // ✅ quotes around 'role'
-
-        return response()->json($vendors);
-
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+        
+        return response()->json(User::where('role','vendor')->get());
     }
- 
-    // 📌 CREATE: Register a new vendor
 
     public function createVendor(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6',
-            'company_name' => 'nullable|string|max:255',
+    {
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+        
+        $data = $request->validate([
+            'name'=>'required|string',
+            'email'=>'required|email|unique:users,email',
+            'password'=>'required|string|min:6',
+            'company_name'=>'nullable|string',
         ]);
- 
-        $vendor = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => bcrypt($validated['password']), // 🔑 hash password
-            'role' => 'vendor',
-            'status' => 'pending', // default until approved
-        ]);
- 
-        return response()->json([
-            'message' => 'Vendor created successfully',
-            'vendor'  => $vendor
-        ], 201);
- 
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Failed to create vendor',
-            'details' => $e->getMessage()
-        ], 500);
+        $data['name'] = $data['name'];
+        $data['password'] = bcrypt($data['password']);
+        $data['role'] = 'vendor';
+        $data['email'] = $data['email'];
+        $vendor = User::create($data);
+        return response()->json(['meaasge' => 'Vendor created successfully','vendor' => $vendor]);
     }
-}
- 
-    // 📌 UPDATE: Update vendor info
 
     public function updateVendor(Request $request, $id)
-
     {
-
-        $vendor = User::where('role', 'vendor')->findOrFail($id);
- 
-        $validated = $request->validate([
-
-            'name'   => 'sometimes|string|max:255',
-
-            'email'  => 'sometimes|email|unique:users,email,' . $vendor->id,
-
-            'status' => 'sometimes|string|in:pending,approved,rejected',
-
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+        $vendor = User::where('role','vendor')->findOrFail($id);
+        $data = $request->validate([
+            'name'=>'sometimes|string',
+            'email'=>'sometimes|email|unique:users,email,'.$vendor->id,
+            'password'=>'nullable|string|min:6',
+            'company_name'=>'nullable|string',
+            'status'=>'sometimes|in:pending,approved,rejected',
         ]);
- 
-        $vendor->update($validated);
- 
+        if(isset($data['password'])) $data['password'] = bcrypt($data['password']);
+        $vendor->update($data);
         return response()->json($vendor);
-
     }
- 
-    // 📌 DELETE: Remove a vendor
 
     public function deleteVendor($id)
-
     {
-
-        $vendor = User::where('role', 'vendor')->findOrFail($id);
-
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+        $vendor = User::where('role','vendor')->findOrFail($id);
         $vendor->delete();
- 
-        return response()->json(['message' => 'Vendor deleted successfully']);
-
+        return response()->json(['message'=>'deleted']);
     }
-
 }
-
- 

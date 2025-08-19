@@ -1,33 +1,47 @@
 <?php
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\{AuthController,PublicVendorController,ProcurementController,ContractController,RatingController,CertificationController,MessageController,DashboardController};
-Route::post('/auth/login',[AuthController::class,'login']);
-Route::post('/auth/register-vendor',[PublicVendorController::class,'register']);
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PublicVendorController;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\KpiController;
+use App\Http\Controllers\CertificationController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\DashboardController;
+
+Route::post('/auth/login', [AuthController::class, 'login'])->name('login');
+
 Route::middleware('auth:api')->group(function () {
-    Route::get('/auth/me',[AuthController::class,'me']);
-    Route::post('/auth/logout',[AuthController::class,'logout']);
-    Route::get('/admin/metrics',[DashboardController::class,'adminMetrics'])->middleware('role:admin');
-    Route::get('/admin/vendors',[PublicVendorController::class,'getVendors'])->middleware('role:admin,procurement');
-    Route::post('/admin/vendors',[PublicVendorController::class,'createVendor'])->middleware('role:admin,procurement');
-    Route::put('/admin/vendors/{id}',[PublicVendorController::class,'updateVendor'])->middleware('role:admin,procurement');
-    Route::delete('/admin/vendors/{id}',[PublicVendorController::class,'deleteVendor'])->middleware('role:admin');
-    Route::get('/procurement/pending-vendors',[ProcurementController::class,'pending'])->middleware('role:procurement');
-    Route::post('/procurement/vendors/{id}/approve',[ProcurementController::class,'approve'])->middleware('role:procurement');
-    Route::post('/procurement/vendors/{id}/reject',[ProcurementController::class,'reject'])->middleware('role:procurement');
-    Route::get('/contracts',[ContractController::class,'index'])->middleware('role:admin,procurement');
-    Route::post('/contracts',[ContractController::class,'store'])->middleware('role:admin,procurement');
-    Route::post('/contracts/{id}/upload-new-version',[ContractController::class,'uploadNewVersion'])->middleware('role:admin,procurement');
-    Route::get('/contracts/{id}',[ContractController::class,'show'])->middleware('role:admin,procurement');
-    Route::put('/contracts/{id}',[ContractController::class,'update'])->middleware('role:admin,procurement');
-    Route::delete('/contracts/{id}',[ContractController::class,'destroy'])->middleware('role:admin');
-    Route::get('/vendors/{vendorId}/ratings',[RatingController::class,'index'])->middleware('role:admin,procurement,finance,vendor');
-    Route::post('/vendors/{vendorId}/ratings',[RatingController::class,'store'])->middleware('role:admin,procurement,finance');
-    Route::get('/vendors/{vendorId}/certs',[CertificationController::class,'index'])->middleware('role:admin,procurement,finance,vendor');
-    Route::post('/vendors/{vendorId}/certs',[CertificationController::class,'store'])->middleware('role:admin,procurement');
-    Route::get('/messages',[MessageController::class,'index'])->middleware('role:admin,procurement,finance,vendor');
-    Route::post('/messages',[MessageController::class,'store'])->middleware('role:admin,procurement,finance,vendor');
-    Route::get('/finance/metrics',[DashboardController::class,'financeMetrics'])->middleware('role:finance');
-    Route::get('/vendor/me/contracts',[ContractController::class,'myContracts'])->middleware('role:vendor');
-    Route::get('/vendor/me/certs',[CertificationController::class,'myCerts'])->middleware('role:vendor');
-    Route::get('/vendor/me/ratings',[RatingController::class,'myRatings'])->middleware('role:vendor');
+    Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
+
+    Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+
+    // Vendors
+    Route::get('/vendors', [PublicVendorController::class, 'getVendors']);
+    Route::post('/vendors', [PublicVendorController::class, 'createVendor']);
+    Route::put('/vendors/{id}', [PublicVendorController::class, 'updateVendor']);
+    Route::delete('/vendors/{id}', [PublicVendorController::class, 'deleteVendor']);
+
+    // Contracts
+    Route::get('/contracts', [ContractController::class, 'index']);
+    Route::post('/contracts', [ContractController::class, 'store']);
+    Route::put('/contracts/{id}', [ContractController::class, 'update']);
+    Route::delete('/contracts/{id}', [ContractController::class, 'delete']);
+
+    // KPIs
+    Route::get('/kpis', [KpiController::class, 'index']);
+    Route::post('/kpis', [KpiController::class, 'store']);
+    Route::put('/kpis/{id}', [KpiController::class, 'update']);
+    Route::delete('/kpis/{id}', [KpiController::class, 'delete']);
+
+    // Certifications
+    Route::get('/certifications', [CertificationController::class, 'index']);
+    Route::post('/certifications', [CertificationController::class, 'store']);
+    Route::put('/certifications/{id}', [CertificationController::class, 'update']);
+    Route::delete('/certifications/{id}', [CertificationController::class, 'delete']);
+
+    // Messages
+    Route::get('/messages', [MessageController::class, 'getMessage']);
+    Route::post('/messages', [MessageController::class, 'updateMessage']);
+    Route::delete('/messages/{id}', [MessageController::class, 'deleteMessage']);
 });

@@ -2,9 +2,37 @@
 namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Message;
-class MessageController extends Controller {
-    public function index(){ $u = auth()->user(); if($u->role==='admin') return Message::latest()->get(); return Message::where('from_user_id',$u->id)->orWhere('to_user_id',$u->id)->latest()->get(); }
-    public function store(Request $r){ $data = $r->validate(['to_user_id'=>'nullable|exists:users,id','channel'=>'required|in:rfq,compliance,general','subject'=>'required|string','body'=>'required|string']); $data['from_user_id']=auth()->id(); $data['status']='open'; return response()->json(Message::create($data),201); }
-    public function update(Request $r,$id){ $m = Message::findOrFail($id); $m->update($r->only('subject','body','status')); return response()->json($m); }
-    public function destroy($id){ Message::findOrFail($id)->delete(); return response()->json(['message'=>'Deleted']); }
+use Illuminate\Support\Facades\Auth;
+
+class MessageController extends Controller
+{
+    public function getMessage()
+    {
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        } 
+        return response()->json(Message::all()); }
+
+    public function createMessage(Request $request)
+    {
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+        $data = $request->validate([
+            'sender_id'=>'required|exists:users,id',
+            'receiver_id'=>'required|exists:users,id',
+            'content'=>'required|string',
+        ]);
+        $m = Message::create($data);
+        return response()->json($m,201);
+    }
+
+    public function deleteMessage($id)
+    {
+        if(Auth::user()->role !== 'admin') {
+            return \response()->json(['error' => 'Forbidden'], 403);
+        }
+         Message::delete($id); 
+         return response()->json(['message'=>'deleted']); 
+    }
 }
